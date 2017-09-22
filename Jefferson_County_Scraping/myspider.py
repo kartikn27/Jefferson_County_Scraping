@@ -18,12 +18,7 @@ class BlogSpider(scrapy.Spider):
 
     def start_requests(self):
         return [scrapy.Request(
-            url=self.url,
-            # cookies={'ASP.NET_SessionId': self.sessionID,
-            #          'TestCookie': 'test', 'LastSessID': self.sessionID,
-            #          'HasAgreedToDisclaimer': 'True',
-            #          'pubAccID': '20'
-            #          },
+            url=self.url,            
             cookies={'ASP.NET_SessionId':'dd3t30553oko1mnlsyomky55',
                      'TestCookie': 'test', 'LastSessID': 'dd3t30553oko1mnlsyomky55',
                      'IMOSearchMode':'basic',
@@ -34,7 +29,6 @@ class BlogSpider(scrapy.Spider):
         )]
 
     def parse(self, response):
-        # open_in_browser(response)
         return scrapy.FormRequest(self.url,
                                   formdata={'__EVENTTARGET': '',
                                             '__EVENTARGUMENT': '',
@@ -51,24 +45,19 @@ class BlogSpider(scrapy.Spider):
                                             'hiddenInputToUpdateATBuffer_CommonToolkitScripts': '1'},
                                   callback=self.form_submit)
 
-    def form_submit(self, response2):
-        # open_in_browser(response2)
+    def form_submit(self, response2):        
         for row in response2.css('.reportTable tr:not(.historic)'):
             counter = 0
             userData = {}
             for td in row.css('td'):
                 counter += 1
-                userData[counter] = td.css('::text').extract()
-                #print("DATA   ", userData[counter])
+                userData[counter] = td.css('::text').extract()                
 
                 if counter == 2:
                     tax_link = td.css('a ::attr(href)').extract_first()
 
 
             if tax_link:
-                #yield scrapy.Request(response2.urljoin(tax_link), meta=userData, callback=self.houseCost)
-                #report_link = td.css('a ::attr(href)').extract_first()
-                #return scrapy.Request(url=tax_link, callback=self.prop_detail)]
                 yield scrapy.Request(url='http://jefferson.sdgnys.com/'+tax_link, callback=self.prop_detail)
 
 
@@ -77,23 +66,9 @@ class BlogSpider(scrapy.Spider):
             yield scrapy.Request(response2.urljoin(next_page), callback=self.form_submit)
 
     def houseCost(self, response):
-        userData = response.meta
-        # yield {
-        #     'town': userData[1] if len(userData)>1 else '',
-        #     'name': userData[3] if len(userData)>3 else '',
-        #     'streetnum': userData[4] if len(userData)>4 else '',
-        #     'streetname': userData[5] if len(userData)>5 else '',
-        #     'fullMarketValue': response.css('#lblFullMarketValue ::text').extract_first(),
-        #     'landAssessment': response.css('#lblLandAssess ::text').extract_first(),
-        #     'totalAssessment': response.css('#lblTotalAssess ::text').extract_first(),
-        #     'propertyClass': response.css('#lblSitePropClass ::text').extract_first(),
-        #     'site': response.css('#lblSite ::text').extract_first(),
-        #     'school': response.css('#lblSchoolDist ::text').extract_first(),
-        #     'neighborhood': response.css('#lblNeighborhood ::text').extract_first()
-        #}
+        userData = response.meta        
 
-    def prop_detail(self, response):
-        #report_link = response.css('#btnReport').extract_first()
+    def prop_detail(self, response):        
         owner_code = response.css('#lblOwnerShipCode ::text').extract_first()
         response = str(response)
         if 'propdetail' in response:
@@ -102,19 +77,16 @@ class BlogSpider(scrapy.Spider):
             swis = response_param.split('&')[0].split('=')[1]
             print_key = response_param.split('&')[1].split('=')[1]
             report_url = 'http://jefferson.sdgnys.com/report.aspx?'
-            report_url_new = report_url + 'file=&swiscode='+swis+'&printkey='+print_key+'&sitetype=res&siteNum=1'
-            #print('report_url_new ', report_url_new)
+            report_url_new = report_url + 'file=&swiscode='+swis+'&printkey='+print_key+'&sitetype=res&siteNum=1'            
             request = scrapy.Request(url=report_url_new, callback=self.report)
-            request.meta['owner_code'] = owner_code
-            #yield scrapy.Request(url=report_url_new, callback=self.report,kwargs={'owner code':owner_code})
+            request.meta['owner_code'] = owner_code            
             yield request
 
     def report(self, response):
 
         response = response.replace(body=response.body.replace(b'<br>', b' ,'))
         h_address = response.css('#lblReportTitle ::text').extract_first()
-        ownership_code = response.meta['owner_code']
-        print("OWNER CODE %%%%%%*********(((((((((()))))))))))))) ", ownership_code)
+        ownership_code = response.meta['owner_code']        
         swis = response.css('#lblSwis ::text').extract_first()
         owner_info=response.css('.owner_info ::text').extract_first()
         site= response.css('#lblSite ::text').extract_first()
@@ -134,35 +106,6 @@ class BlogSpider(scrapy.Spider):
         sewer_type = response.css('#lblRSewerType ::text').extract_first()
         r_utilities = response.css('#lblRUtilities ::text').extract_first()
         water_supply = response.css('#lblRWaterSupply ::text').extract_first()
-        print("h_add ", h_address)
-        print ("OwnerShipCode",ownership_code)
-        print("SWIS", swis)
-        print("site ", site)
-        print("nieghborhood ", nieghborhood)
-        print("land_assessment ", land_assessment)
-        print("total_assessment ", total_assessment)
-        print("full_market_value ", full_market_value)
-        print("bedrooms ", bedrooms)
-        print("total_acreage ", total_acreage)
-        print("owner_info ", owner_info)
-        print("living_area",living_area)
-        print("second_story_area",second_story_area)
-        print("building_style",building_style)
-        print("porch_type",porch_type)
-        print("porch_area",porch_area)
-        print("overall_condition",overall_condition)
-        print("overall_grade",overall_grade)
-        print("sewer_type",sewer_type)
-        print("r_utilities",r_utilities)
-        print("water_supply",water_supply)
-
-
-
-
-        #myfile = open("Informationen.csv", "a")
-        #writer = csv.writer(myfile, delimiter=',')
-        # #writer.writerows(zip(owner_info.encode(),land_assessment.encode(),total_assessment,full_market_value,bathrooms,bedrooms,total_acreage))
-        # writer.writerows(zip(owner_info,land_assessment))
 
         file_exists = os.path.isfile('jefferson.csv')
         with open('jefferson.csv', 'a') as csvfile:
